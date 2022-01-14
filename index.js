@@ -1,6 +1,7 @@
 module.exports = Storage
 
 const queueMicrotask = require('queue-microtask')
+const CircularBuffer = require('circular-buffer')
 
 function Storage (chunkLength, opts) {
   if (!(this instanceof Storage)) return new Storage(chunkLength, opts)
@@ -9,27 +10,30 @@ function Storage (chunkLength, opts) {
   this.chunkLength = Number(chunkLength)
   if (!this.chunkLength) throw new Error('First argument must be a chunk length')
 
-  this.chunks = []
   this.closed = false
-  this.length = Number(opts.length) || Infinity
+  this.length = Number(opts.length) || 100
 
-  if (this.length !== Infinity) {
-    this.lastChunkLength = (this.length % this.chunkLength) || this.chunkLength
-    this.lastChunkIndex = Math.ceil(this.length / this.chunkLength) - 1
-  }
+  this.chunkIds = new CircularBuffer(this.length)
+  this.chunks = new Map()
+}
+
+Storage.prototype.isFull = function () {
+  return this.chunkIds.length >= this.length
 }
 
 Storage.prototype.put = function (index, buf, cb = () => {}) {
   if (this.closed) return queueMicrotask(() => cb(new Error('Storage is closed')))
 
-  const isLastChunk = (index === this.lastChunkIndex)
-  if (isLastChunk && buf.length !== this.lastChunkLength) {
-    return queueMicrotask(() => cb(new Error('Last chunk length must be ' + this.lastChunkLength)))
-  }
-  if (!isLastChunk && buf.length !== this.chunkLength) {
+  if (buf.length !== this.chunkLength) {
     return queueMicrotask(() => cb(new Error('Chunk length must be ' + this.chunkLength)))
   }
-  this.chunks[index] = buf
+
+  if (this.isFull()) {
+    const removedId = this.chunkIds.shift()
+    this.chunks.delete(removedId)
+  }
+  this.chunkIds.push(index)
+  this.chunks.set(index, buf)
   queueMicrotask(() => cb(null))
 }
 
@@ -37,7 +41,7 @@ Storage.prototype.get = function (index, opts, cb = () => {}) {
   if (typeof opts === 'function') return this.get(index, null, opts)
   if (this.closed) return queueMicrotask(() => cb(new Error('Storage is closed')))
 
-  let buf = this.chunks[index]
+  let buf = this.chunks.get(index)
 
   if (!buf) {
     const err = new Error('Chunk not found')

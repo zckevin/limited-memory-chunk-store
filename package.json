@@ -1,12 +1,13 @@
 {
-  "name": "memory-chunk-store",
+  "name": "@zckevin/limited-memory-chunk-store",
   "description": "In memory chunk store that is abstract-chunk-store compliant",
-  "version": "1.3.5",
-  "author": "Mathias Buus (@mafintosh)",
+  "version": "0.0.1",
+  "author": "Cong Zuo",
   "bugs": {
     "url": "https://github.com/mafintosh/memory-chunk-store/issues"
   },
   "dependencies": {
+    "circular-buffer": "^1.0.3",
     "queue-microtask": "^1.2.3"
   },
   "devDependencies": {
