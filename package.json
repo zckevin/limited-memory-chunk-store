@@ -1,7 +1,7 @@
 {
   "name": "@zckevin/limited-memory-chunk-store",
   "description": "In memory chunk store that is abstract-chunk-store compliant",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": "Cong Zuo",
   "bugs": {
     "url": "https://github.com/mafintosh/memory-chunk-store/issues"
