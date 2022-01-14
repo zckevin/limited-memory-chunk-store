@@ -37,3 +37,34 @@ test('thresh', function (t) {
     })
   })
 })
+
+test('eternal', function (t) {
+  LimitedMemoryChunkStore.thresh = 2
+  const store = new LimitedMemoryChunkStore(1, { eternal: true })
+
+  store.put(0, Buffer.from('a'))
+  store.lock()
+  store.put(1, Buffer.from('b'))
+  store.put(2, Buffer.from('c'))
+  store.put(3, Buffer.from('d'))
+
+  t.equal(store.isFull(), true)
+  t.deepEqual(store.chunkIds.toarray(), [2, 3])
+
+  store.get(0, (err, buf) => {
+    t.error(err)
+    t.deepEqual(buf, Buffer.from('a'))
+    store.get(1, (err, buf) => {
+      t.ok(err instanceof Error)
+      store.get(2, (err, buf) => {
+        t.error(err)
+        t.deepEqual(buf, Buffer.from('c'))
+        store.get(3, (err, buf) => {
+          t.error(err)
+          t.deepEqual(buf, Buffer.from('d'))
+          t.end()
+        })
+      })
+    })
+  })
+})

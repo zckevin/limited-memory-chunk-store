@@ -15,18 +15,33 @@ function Storage (chunkLength, opts) {
 
   this.chunkIds = new CircularBuffer(this.thresh)
   this.chunks = new Map()
+
+  if (opts.eternal) {
+    this.eternalChunks = new Map()
+    this.eternalLocked = false
+  }
 }
 
 Storage.prototype.isFull = function () {
   return this.chunkIds.size() >= this.chunkIds.capacity()
 }
 
+Storage.prototype.lock = function () {
+  this.eternalLocked = true
+}
+
 Storage.prototype.put = function (index, buf, cb = () => {}) {
   if (this.closed) return queueMicrotask(() => cb(new Error('Storage is closed')))
 
-  // if (buf.length !== this.chunkLength) {
-  //   return queueMicrotask(() => cb(new Error('Chunk length must be ' + this.chunkLength)))
-  // }
+  if (buf.length !== this.chunkLength) {
+    return queueMicrotask(() => cb(new Error('Chunk length must be ' + this.chunkLength)))
+  }
+
+  if (this.eternalChunks && !this.eternalLocked) {
+    this.eternalChunks.set(index, buf)
+    queueMicrotask(() => cb(null))
+    return
+  }
 
   if (this.isFull()) {
     const removedId = this.chunkIds.shift()
@@ -41,6 +56,10 @@ Storage.prototype.get = function (index, opts, cb = () => {}) {
   if (typeof opts === 'function') return this.get(index, null, opts)
   if (this.closed) return queueMicrotask(() => cb(new Error('Storage is closed')))
 
+  if (this.eternalChunks && this.eternalChunks.has(index)) {
+    queueMicrotask(() => cb(null, this.eternalChunks.get(index)))
+    return
+  }
   let buf = this.chunks.get(index)
 
   if (!buf) {
