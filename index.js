@@ -11,14 +11,14 @@ function Storage (chunkLength, opts) {
   if (!this.chunkLength) throw new Error('First argument must be a chunk length')
 
   this.closed = false
-  this.thresh = Number(opts.thresh) || 100
+  this.thresh = Number(opts.thresh) || Storage.thresh || 100
 
   this.chunkIds = new CircularBuffer(this.thresh)
   this.chunks = new Map()
 }
 
 Storage.prototype.isFull = function () {
-  return this.chunkIds.length >= this.thresh
+  return this.chunkIds.size() >= this.chunkIds.capacity()
 }
 
 Storage.prototype.put = function (index, buf, cb = () => {}) {
