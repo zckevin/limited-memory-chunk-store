@@ -24,9 +24,9 @@ Storage.prototype.isFull = function () {
 Storage.prototype.put = function (index, buf, cb = () => {}) {
   if (this.closed) return queueMicrotask(() => cb(new Error('Storage is closed')))
 
-  if (buf.length !== this.chunkLength) {
-    return queueMicrotask(() => cb(new Error('Chunk length must be ' + this.chunkLength)))
-  }
+  // if (buf.length !== this.chunkLength) {
+  //   return queueMicrotask(() => cb(new Error('Chunk length must be ' + this.chunkLength)))
+  // }
 
   if (this.isFull()) {
     const removedId = this.chunkIds.shift()
