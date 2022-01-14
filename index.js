@@ -16,7 +16,7 @@ function Storage (chunkLength, opts) {
   this.chunkIds = new CircularBuffer(this.thresh)
   this.chunks = new Map()
 
-  if (opts.eternal) {
+  if (Storage.eternal || opts.eternal) {
     this.eternalChunks = new Map()
     this.eternalLocked = false
   }

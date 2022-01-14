@@ -40,7 +40,8 @@ test('thresh', function (t) {
 
 test('eternal', function (t) {
   LimitedMemoryChunkStore.thresh = 2
-  const store = new LimitedMemoryChunkStore(1, { eternal: true })
+  LimitedMemoryChunkStore.eternal = true
+  const store = new LimitedMemoryChunkStore(1)
 
   store.put(0, Buffer.from('a'))
   store.lock()
