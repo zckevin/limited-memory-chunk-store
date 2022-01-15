@@ -11,9 +11,11 @@ function Storage (chunkLength, opts) {
   if (!this.chunkLength) throw new Error('First argument must be a chunk length')
 
   this.closed = false
-  this.thresh = Number(opts.thresh) || Storage.thresh || 100
+  // max stored chunk size in bytes
+  this.thresh = Number(opts.thresh) || Storage.thresh || 100 * 1024 * 1024
+  this.threshChunks = Math.ceil(this.thresh / this.chunkLength)
 
-  this.chunkIds = new CircularBuffer(this.thresh)
+  this.chunkIds = new CircularBuffer(this.threshChunks)
   this.chunks = new Map()
 
   if (Storage.eternal || opts.eternal) {
@@ -35,6 +37,7 @@ Storage.prototype.lock = function () {
 Storage.prototype.put = function (index, buf, cb = () => {}) {
   if (this.closed) return queueMicrotask(() => cb(new Error('Storage is closed')))
 
+  // chunk length check enabled on testing only
   if (!this.disableChunkLengthCheck && buf.length !== this.chunkLength) {
     return queueMicrotask(() => cb(new Error('Chunk length must be ' + this.chunkLength)))
   }
